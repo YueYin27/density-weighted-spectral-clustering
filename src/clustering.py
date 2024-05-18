@@ -58,6 +58,9 @@ def spectral_clustering(image, k=4, affinity='nearest_neighbors', n_neighbors=10
 
     # Get centroids by averaging the pixels assigned to each cluster
     centroids = np.array([pixels[labels == i].mean(axis=0) for i in range(k)])
+    # Reshape labels back to the original image shape (height, width)
+    labels = labels.reshape(image.shape[0], image.shape[1])
+    return labels, centroids
 
 def spectral_clustering_self(image, k=4):
     n_clusters = k
@@ -92,9 +95,8 @@ def spectral_clustering_self(image, k=4):
         cluster_pixels = image[segmented_image == i]
         if len(cluster_pixels) > 0:
             pixel_centroids[i] = np.mean(cluster_pixels, axis=0)
-
+    labels = labels.reshape(image.shape[:2])
     return labels, pixel_centroids
 
-    # Reshape labels back to the original image shape (height, width)
-    labels = labels.reshape(image.shape[0], image.shape[1])
-    return labels, centroids
+
+
