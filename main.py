@@ -37,7 +37,7 @@ def main():
     segment_images("kmeans", test_images, test_labels, os.path.join(output_path, "kmeans"), k=4, max_iters=100)
 
     # Process and segment images using Spectral clustering
-    segment_images("spectral", test_images, test_labels, os.path.join(output_path, "spectral"), k=4, n_neighbors=5)
+    segment_images("spectral", test_images, test_labels, os.path.join(output_path, "spectral"), k=4, sigma=30.0, max_iters=100)
 
 
 if __name__ == "__main__":

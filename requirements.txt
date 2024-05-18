@@ -5,3 +5,4 @@ scikit-image
 Pillow
 opencv-python~=4.9.0.80
 scipy~=1.13.0
+tqdm~=4.66.2

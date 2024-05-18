@@ -5,13 +5,14 @@ from scipy.spatial.distance import pdist, squareform
 from scipy.linalg import eigh
 from sklearn.cluster import KMeans
 
+
 def kmeans(image, k=4, max_iters=100):
     """
     Perform K-means clustering on image
 
-    :parameter image: Input image as a 3D NumPy array (height, width, 3).
-    :parameter k: Number of clusters.
-    :parameter max_iters: Maximum number of iterations to run K-means.
+    :param image: Input image as a 3D NumPy array (height, width, 3).
+    :param k: Number of clusters.
+    :param max_iters: Maximum number of iterations to run K-means.
     :return: labels: Cluster labels for each pixel reshaped to the original image shape.
     :return: centroids: RGB values of the cluster centroids.
     """
@@ -36,41 +37,21 @@ def kmeans(image, k=4, max_iters=100):
     return labels, centroids
 
 
-def spectral_clustering(image, k=4, affinity='nearest_neighbors', n_neighbors=10):
+def spectral_clustering(image, k=4, sigma=30.0, max_iters=100):
     """
     Perform Spectral Clustering on an image.
 
-    :parameter image: Input image as a 3D NumPy array (height, width, 3).
-    :parameter k: Number of clusters.
-    :parameter affinity: Type of affinity matrix to use ('nearest_neighbors' or 'rbf').
-    :parameter n_neighbors: Number of nearest neighbors to consider when using 'nearest_neighbors' affinity.
+    :param image: Input image as a 3D NumPy array (height, width, 3).
+    :param k: Number of clusters.
+    :param sigma: Standard deviation for Gaussian kernel.
+    :param max_iters: Maximum number of iterations to run K-means.
     :return: labels: Cluster labels for each pixel reshaped to the original image shape.
     :return: centroids: RGB values of the cluster centroids.
     """
-    pixels = image.reshape(-1, 3)  # Reshape image to a 2D array of pixels (num_pixels, 3)
-    # pixels = shuffle(pixels)  # Shuffle pixels to ensure random sampling
-
-    # Apply spectral clustering
-    if affinity == 'nearest_neighbors':
-        spectral = SpectralClustering(n_clusters=k, affinity=affinity, n_neighbors=n_neighbors, assign_labels='kmeans')
-    else:
-        spectral = SpectralClustering(n_clusters=k, affinity=affinity, assign_labels='kmeans')
-
-    labels = spectral.fit_predict(pixels)
-
-    # Get centroids by averaging the pixels assigned to each cluster
-    centroids = np.array([pixels[labels == i].mean(axis=0) for i in range(k)])
-    # Reshape labels back to the original image shape (height, width)
-    labels = labels.reshape(image.shape[0], image.shape[1])
-    return labels, centroids
-
-def spectral_clustering_self(image, k=4):
     n_clusters = k
-    # Reshape the image to be a list of pixels
     pixels = image.reshape(-1, 3)
 
-    # Compute the affinity matrix
-    sigma = 30.0
+    # Compute the affinity matrix using Gaussian (RBF) kernel
     pairwise_dists = squareform(pdist(pixels, 'sqeuclidean'))
     affinity_matrix = np.exp(-pairwise_dists / (2.0 * sigma ** 2))
 
@@ -85,20 +66,19 @@ def spectral_clustering_self(image, k=4):
     normalized_laplacian = np.dot(d_inv_sqrt, np.dot(laplacian_matrix, d_inv_sqrt))
 
     # Compute the first k eigenvectors
-    _, eigenvectors = eigh(normalized_laplacian, subset_by_index=[0, n_clusters-1])
+    _, eigenvectors = eigh(normalized_laplacian, subset_by_index=[0, n_clusters - 1])
 
-    # Use k-means to cluster the eigenvectors
-    kmeans = KMeans(n_clusters=n_clusters).fit(eigenvectors)
-    labels = kmeans.labels_
-    centers = kmeans.cluster_centers_
+    # Use K-means to cluster the eigenvectors
+    labels = KMeans(n_clusters=n_clusters, max_iter=max_iters, random_state=42).fit(eigenvectors).labels_
+
     # Convert centroids to original pixel space colors
-    segmented_image = labels.reshape(image.shape[:2])
-    pixel_centroids = np.zeros((n_clusters, 3))
+    labels = labels.reshape(image.shape[:2])
+    centroids = np.zeros((n_clusters, 3))
     for i in range(n_clusters):
-        cluster_pixels = image[segmented_image == i]
+        cluster_pixels = image[labels == i]
         if len(cluster_pixels) > 0:
-            pixel_centroids[i] = np.mean(cluster_pixels, axis=0)
-    return segmented_image, pixel_centroids
-    # return labels, pixel_centroids
+            centroids[i] = np.mean(cluster_pixels, axis=0)
+
+    return labels, centroids
 
 
