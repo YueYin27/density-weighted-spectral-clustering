@@ -92,13 +92,13 @@ def spectral_clustering_self(image, k=4):
     labels = kmeans.labels_
     centers = kmeans.cluster_centers_
     # Convert centroids to original pixel space colors
+    segmented_image = labels.reshape(image.shape[:2])
     pixel_centroids = np.zeros((n_clusters, 3))
     for i in range(n_clusters):
         cluster_pixels = image[segmented_image == i]
         if len(cluster_pixels) > 0:
             pixel_centroids[i] = np.mean(cluster_pixels, axis=0)
-    labels = labels.reshape(image.shape[:2])
-    return labels, pixel_centroids
-
+    return segmented_image, pixel_centroids
+    # return labels, pixel_centroids
 
 
