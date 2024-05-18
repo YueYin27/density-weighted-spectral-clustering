@@ -4,7 +4,15 @@ from sklearn.utils import shuffle
 
 
 def kmeans(image, k=4, max_iters=100):
-    """ Perform K-means clustering on image """
+    """
+    Perform K-means clustering on image
+
+    :parameter image: Input image as a 3D NumPy array (height, width, 3).
+    :parameter k: Number of clusters.
+    :parameter max_iters: Maximum number of iterations to run K-means.
+    :return: labels: Cluster labels for each pixel reshaped to the original image shape.
+    :return: centroids: RGB values of the cluster centroids.
+    """
     pixels = image.reshape(-1, 3)  # Reshape image to a 2D array of pixels, where each row is a pixel in RGB space
     centroids = shuffle(pixels)[:k]  # Initialize centroids by selecting k random points
 
@@ -30,15 +38,12 @@ def spectral_clustering(image, k=4, affinity='nearest_neighbors', n_neighbors=10
     """
     Perform Spectral Clustering on an image.
 
-    Parameters:
-    - image: Input image as a 3D NumPy array (height, width, 3).
-    - k: Number of clusters.
-    - affinity: Affinity type to use ('nearest_neighbors' or other types).
-    - n_neighbors: Number of neighbors to use when constructing the affinity graph (relevant if affinity='nearest_neighbors').
-
-    Returns:
-    - labels: Cluster labels for each pixel reshaped to the original image shape.
-    - centroids: RGB values of the cluster centroids.
+    :parameter image: Input image as a 3D NumPy array (height, width, 3).
+    :parameter k: Number of clusters.
+    :parameter affinity: Type of affinity matrix to use ('nearest_neighbors' or 'rbf').
+    :parameter n_neighbors: Number of nearest neighbors to consider when using 'nearest_neighbors' affinity.
+    :return: labels: Cluster labels for each pixel reshaped to the original image shape.
+    :return: centroids: RGB values of the cluster centroids.
     """
     pixels = image.reshape(-1, 3)  # Reshape image to a 2D array of pixels (num_pixels, 3)
     # pixels = shuffle(pixels)  # Shuffle pixels to ensure random sampling
