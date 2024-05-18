@@ -131,12 +131,28 @@ def load_cifar_10(data_path, class_ids):
     # Load testing images
     test_images, test_labels = load_images(test_data, class_ids)
 
-    # Combine training and testing data
-    all_images = train_images + test_images
-    all_labels = train_labels + test_labels
+    # Save training images
+    train_dir = os.path.join(data_path, 'train_images')
+    os.makedirs(train_dir, exist_ok=True)
+    for idx, (img, label) in enumerate(zip(train_images, train_labels)):
+        img_path = os.path.join(train_dir, f"{idx}_{label_map[label]}.png")
+        if os.path.exists(img_path):
+            continue
+        cv2.imwrite(img_path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+
+    # Save testing images
+    test_dir = os.path.join(data_path, 'test_images')
+    os.makedirs(test_dir, exist_ok=True)
+    for idx, (img, label) in enumerate(zip(test_images, test_labels)):
+        img_path = os.path.join(test_dir, f"{idx}_{label_map[label]}.png")
+        if os.path.exists(img_path):
+            continue
+        cv2.imwrite(img_path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 
     # Convert to NumPy arrays
-    all_images = np.array(all_images)
-    all_labels = np.array(all_labels)
+    train_images = np.array(train_images)
+    train_labels = np.array(train_labels)
+    test_images = np.array(test_images)
+    test_labels = np.array(test_labels)
 
-    return all_images, all_labels
+    return train_images, train_labels, test_images, test_labels
