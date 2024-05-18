@@ -1,7 +1,9 @@
 import numpy as np
 from sklearn.cluster import SpectralClustering
 from sklearn.utils import shuffle
-
+from scipy.spatial.distance import pdist, squareform
+from scipy.linalg import eigh
+from sklearn.cluster import KMeans
 
 def kmeans(image, k=4, max_iters=100):
     """
