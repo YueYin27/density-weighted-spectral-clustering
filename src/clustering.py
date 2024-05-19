@@ -68,7 +68,7 @@ def spectral_clustering(image, graph_method, k=4, sigma=30.0, n_neighbors=10, ma
                 similarity_matrix[indices[i, j], i] = similarity_matrix[i, indices[i, j]]
 
     elif graph_method == 'fully_connected':
-        # Compute the affinity matrix using the Gaussian (RBF) kernel
+        # Compute the similarity matrix using the Gaussian (RBF) kernel
         pairwise_dists = squareform(pdist(pixels, 'sqeuclidean'))
         similarity_matrix = np.exp(-pairwise_dists / (2.0 * sigma ** 2))
 

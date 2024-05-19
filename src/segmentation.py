@@ -44,7 +44,7 @@ def segment_images(method, images, gt_labels, output_folder, **kwargs):
         with tqdm(total=len(images)) as pbar:
             pbar.set_description('Processing Improved Spectral:')
             for idx, (image, gt_label) in enumerate(zip(images, gt_labels)):
-                labels, centroids = spectral_clustering_enhanced(image, **kwargs)
+                labels, centroids = spectral_clustering(image, **kwargs)
                 segmented_image = centroids[labels].astype(
                     np.uint8)
                 gt_label_name = label_map[gt_label]
