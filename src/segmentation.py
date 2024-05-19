@@ -39,6 +39,19 @@ def segment_images(method, images, gt_labels, output_folder, **kwargs):
                 image_path = os.path.join(output_folder, f"seg_{idx}_{gt_label_name}.png")
                 cv2.imwrite(image_path, segmented_image)
                 pbar.update(1)
+
+    elif method == 'spectral_enhanced':
+        with tqdm(total=len(images)) as pbar:
+            pbar.set_description('Processing Improved Spectral:')
+            for idx, (image, gt_label) in enumerate(zip(images, gt_labels)):
+                labels, centroids = spectral_clustering_enhanced(image, **kwargs)
+                segmented_image = centroids[labels].astype(
+                    np.uint8)
+                gt_label_name = label_map[gt_label]
+                image_path = os.path.join(output_folder, f"seg_{idx}_{gt_label_name}.png")
+                cv2.imwrite(image_path, segmented_image)
+                pbar.update(1)
+
     else:
         raise ValueError("Unsupported method. Use 'kmeans' or 'spectral'.")
 

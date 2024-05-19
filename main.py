@@ -34,10 +34,11 @@ def main():
         os.makedirs(output_path)
 
     # Process and segment images using K-means
-    segment_images("kmeans", test_images, test_labels, os.path.join(output_path, "kmeans"), k=4, max_iters=100)
+    # segment_images("kmeans", test_images, test_labels, os.path.join(output_path, "kmeans"), k=4, max_iters=100)
 
     # Process and segment images using Spectral clustering
-    segment_images("spectral", test_images, test_labels, os.path.join(output_path, "spectral"), k=4, sigma=30.0, max_iters=100)
+    segment_images("spectral", test_images, test_labels, os.path.join(output_path, "spectral_knn_20"), graph_method="knn", k=4, max_iters=100, sigma=30.0, n_neighbors=10)
+    # segment_images("spectral_enhanced", test_images, test_labels, os.path.join(output_path, "spectral_enhanced"), k=4, n_neighbors=10, max_iters=100)
 
 
 if __name__ == "__main__":
