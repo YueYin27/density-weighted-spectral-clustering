@@ -4,11 +4,10 @@ from scipy.linalg import eigh
 from scipy.spatial.distance import pdist, squareform
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import NearestNeighbors, KDTree
 from sklearn.preprocessing import normalize
 from sklearn.utils import shuffle
 from skimage.transform import resize
-
 from src.autoencoder import *
 
 
@@ -154,7 +153,7 @@ def spectral_clustering_with_autoencoder(image, graph_method, k=4, sigma=30.0, n
     return labels, centroids
 
 
-def multi_scale_clustering(image, graph_method, k=4, sigma=30.0, n_neighbors=10, max_iters=100, epsilon=1e-10):
+def spectral_clustering_multi_scale(image, graph_method, k=4, sigma=30.0, n_neighbors=10, max_iters=100, epsilon=1e-10):
     labels_list = []
     scales = [0.5, 1, 2]
     for scale in scales:
@@ -190,3 +189,65 @@ def multi_scale_clustering(image, graph_method, k=4, sigma=30.0, n_neighbors=10,
 
     return labels_final, centroids
 
+
+def density_weighted_spectral_clustering(image, graph_method, k=4, sigma=30.0, n_neighbors=10, max_iters=100,
+                                         epsilon=1e-10, density_sigma=5.0, image_channel=3):
+    """
+    Perform Density-Weighted Spectral Clustering on an image.
+
+    :param image: Input image as a 3D NumPy array (height, width, 3).
+    :param k: Number of clusters.
+    :param sigma: Standard deviation for Gaussian kernel (affinity).
+    :param n_neighbors: Number of neighbors for k-nearest neighbors affinity.
+    :param max_iters: Maximum number of iterations to run K-means.
+    :param epsilon: Small positive value to avoid division by zero.
+    :param graph_method: Method to construct the graph ('knn' or 'fully_connected').
+    :param density_sigma: Standard deviation for Gaussian kernel (density estimation).
+    :param image_channel: Number of channels in the image.
+    :return: labels: Cluster labels for each pixel reshaped to the original image shape.
+    :return: centroids: RGB values of the cluster centroids.
+    """
+    pixels = image.reshape(-1, image_channel)
+    n_pixels = pixels.shape[0]
+
+    # Density estimation using Gaussian kernel
+    kdtree = KDTree(pixels[..., :3])
+    densities = kdtree.kernel_density(pixels[..., :3], h=density_sigma, kernel='gaussian')
+
+    if graph_method == 'knn':
+        nbrs = NearestNeighbors(n_neighbors=n_neighbors).fit(pixels)
+        distances, indices = nbrs.kneighbors(pixels)
+
+        similarity_matrix = np.zeros((n_pixels, n_pixels))
+        for i in range(n_pixels):
+            for j in range(1, n_neighbors):  # start from 1 to exclude self-loop
+                weight = np.exp(-distances[i, j] ** 2 / (2.0 * sigma ** 2))
+                similarity_matrix[i, indices[i, j]] = weight * (densities[i] + densities[indices[i, j]]) / 2
+                similarity_matrix[indices[i, j], i] = similarity_matrix[i, indices[i, j]]
+    elif graph_method == 'fully_connected':
+        pairwise_dists = squareform(pdist(pixels, 'sqeuclidean'))
+        similarity_matrix = np.exp(-pairwise_dists / (2.0 * sigma ** 2))
+        similarity_matrix *= (densities[:, None] + densities[None, :]) / 2
+
+    # Compute the degree matrix and the normalized Laplacian
+    degree_matrix = np.diag(similarity_matrix.sum(axis=1))
+    degree_matrix[degree_matrix == 0] = epsilon
+    d_inv_sqrt = np.diag(1.0 / np.sqrt(degree_matrix.diagonal()))
+    normalized_laplacian = np.dot(d_inv_sqrt, np.dot(degree_matrix - similarity_matrix, d_inv_sqrt))
+
+    # Eigenvector decomposition
+    _, eigenvectors = eigh(normalized_laplacian, subset_by_index=[0, k - 1])
+    eigenvectors = normalize(eigenvectors, axis=1)
+
+    # K-means clustering
+    kmeans = KMeans(n_clusters=k, init='k-means++', max_iter=max_iters, random_state=42)
+    labels = kmeans.fit_predict(eigenvectors)
+    labels = labels.reshape(image.shape[:2])
+
+    centroids = np.zeros((k, image_channel))
+    for i in range(k):
+        cluster_pixels = image[labels == i]
+        if len(cluster_pixels) > 0:
+            centroids[i] = np.mean(cluster_pixels, axis=0)
+
+    return labels, centroids

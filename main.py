@@ -53,9 +53,13 @@ def main():
     #                os.path.join(output_path, "spectral_knn_25_sigma_13_multi_color_space_enhanced"),
     #                graph_method="knn", k=4, max_iters=200, sigma=13.0, n_neighbors=25)
 
-    segment_images("spectral_with_multi_resolution", test_images, test_labels,
-                   os.path.join(output_path, "spectral_with_multi_resolution"),
-                   graph_method="knn", k=4, max_iters=200, sigma=13.0, n_neighbors=20)
+    # segment_images("spectral_with_multi_resolution", test_images, test_labels,
+    #                os.path.join(output_path, "spectral_with_multi_resolution"),
+    #                graph_method="knn", k=4, max_iters=200, sigma=13.0, n_neighbors=20)
+
+    segment_images("spectral_with_density_weighted", test_images, test_labels,
+                   os.path.join(output_path, "spectral_with_density_weighted"),
+                   graph_method="knn", k=4, max_iters=200, sigma=13.0, n_neighbors=20, density_sigma=5.0)
 
 
 if __name__ == "__main__":

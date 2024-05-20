@@ -52,7 +52,6 @@ def segment_images(method, images, gt_labels, output_folder, **kwargs):
     :param images: List of input images as 3D NumPy arrays (height, width, 3).
     :param gt_labels: List of ground truth labels for each image.
     :param output_folder: Folder to save segmented images.
-    :param autoencoder: Autoencoder model for spectral clustering with autoencoder.
     :param kwargs: Additional keyword arguments for the segmentation method.
     """
     os.makedirs(output_folder, exist_ok=True)
@@ -85,11 +84,6 @@ def segment_images(method, images, gt_labels, output_folder, **kwargs):
         with tqdm(total=len(images)) as pbar:
             pbar.set_description('Processing Spectral:')
             for idx, (image, gt_label) in enumerate(zip(images, gt_labels)):
-                # # Convert the image to the target color space
-                # hsv_image = convert_color_space(image, 'HSV')
-                # lab_image = convert_color_space(image, 'Lab')
-                # ycrcb_image = convert_color_space(image, 'YCrCb')
-                # combined_image = np.concatenate((image, hsv_image, ycrcb_image), axis=2)  # 32x32x9
                 labels, centroids = spectral_clustering_with_autoencoder(image, image_channel=3, **kwargs)
                 segmented_image = centroids[labels].astype(np.uint8)[..., :3]
                 gt_label_name = label_map[gt_label]  # Use the ground truth label for naming the image
@@ -134,12 +128,29 @@ def segment_images(method, images, gt_labels, output_folder, **kwargs):
         with tqdm(total=len(images)) as pbar:
             pbar.set_description('Processing Spectral:')
             for idx, (image, gt_label) in enumerate(zip(images, gt_labels)):
-                labels, centroids = multi_scale_clustering(image, **kwargs)
+                labels, centroids = spectral_clustering_multi_scale(convert_color_space(image, 'HSV'), **kwargs)
                 segmented_image = centroids[labels].astype(
                     np.uint8)  # Replace each label in the labels array with the corresponding centroid's RGB values
                 gt_label_name = label_map[gt_label]  # Use the ground truth label for naming the image
                 image_path = os.path.join(output_folder, f"seg_{idx}_{gt_label_name}.png")
-                cv2.imwrite(image_path, cv2.cvtColor(segmented_image, cv2.COLOR_BGR2RGB))
+                cv2.imwrite(image_path, cv2.cvtColor(segmented_image, cv2.COLOR_HSV2RGB))
+                pbar.update(1)
+
+    elif method == 'spectral_with_density_weighted':
+        with tqdm(total=len(images)) as pbar:
+            pbar.set_description('Processing Spectral:')
+            for idx, (image, gt_label) in enumerate(zip(images, gt_labels)):
+                # Convert the image to the target color space
+                hsv_image = convert_color_space(image, 'HSV')
+                lab_image = convert_color_space(image, 'Lab')
+                ycrcb_image = convert_color_space(image, 'YCrCb')
+                combined_image = np.concatenate((image, hsv_image, ycrcb_image), axis=2)  # 32x32x9
+                labels, centroids = density_weighted_spectral_clustering(combined_image, image_channel=9, **kwargs)
+                segmented_image = centroids[labels].astype(
+                    np.uint8)  # Replace each label in the labels array with the corresponding centroid's RGB values
+                gt_label_name = label_map[gt_label]  # Use the ground truth label for naming the image
+                image_path = os.path.join(output_folder, f"seg_{idx}_{gt_label_name}.png")
+                cv2.imwrite(image_path, cv2.cvtColor(segmented_image[..., :3], cv2.COLOR_BGR2RGB))
                 pbar.update(1)
 
     else:
