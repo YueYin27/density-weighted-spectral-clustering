@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
 from scipy.linalg import eigh
 from scipy.spatial.distance import pdist, squareform
 from sklearn.cluster import KMeans
@@ -6,6 +7,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import normalize
 from sklearn.utils import shuffle
+from skimage.transform import resize
 
 from src.autoencoder import *
 
@@ -150,3 +152,41 @@ def spectral_clustering_with_autoencoder(image, graph_method, k=4, sigma=30.0, n
             centroids[i] = np.mean(cluster_pixels, axis=0)
 
     return labels, centroids
+
+
+def multi_scale_clustering(image, graph_method, k=4, sigma=30.0, n_neighbors=10, max_iters=100, epsilon=1e-10):
+    labels_list = []
+    scales = [0.5, 1, 2]
+    for scale in scales:
+        # Scale the image
+        if scale < 1:
+            # Downscaling
+            scaled_image = resize(image, (int(32 * scale), int(32 * scale)), anti_aliasing=True)
+        elif scale > 1:
+            # Upscaling with smoothing
+            smoothed_image = cv2.GaussianBlur(image, (5, 5), sigmaX=1)
+            scaled_image = resize(smoothed_image, (int(32 * scale), int(32 * scale)), anti_aliasing=True)
+        else:
+            # Original scale
+            scaled_image = image
+
+        # Perform clustering
+        labels, _ = spectral_clustering(scaled_image, graph_method, k, sigma, n_neighbors, max_iters, epsilon,
+                                        image_channel=3)
+        if scale != 1:
+            labels = resize(labels.astype(float), (32, 32), order=0, anti_aliasing=False)
+
+        labels_list.append(labels)
+
+    # Majority voting across scales
+    labels_stack = np.stack(labels_list, axis=-1)
+    labels_final = np.apply_along_axis(lambda x: np.bincount(x.astype(int), minlength=k).argmax(), axis=2,
+                                       arr=labels_stack)
+
+    # Recalculate centroids for final labels
+    centroids = np.zeros((k, 3))
+    for i in range(k):
+        centroids[i] = np.mean(image[labels_final == i], axis=0)
+
+    return labels_final, centroids
+

@@ -130,6 +130,18 @@ def segment_images(method, images, gt_labels, output_folder, **kwargs):
                 cv2.imwrite(image_path, cv2.cvtColor(segmented_image, cv2.COLOR_BGR2RGB))
                 pbar.update(1)
 
+    elif method == 'spectral_with_multi_resolution':
+        with tqdm(total=len(images)) as pbar:
+            pbar.set_description('Processing Spectral:')
+            for idx, (image, gt_label) in enumerate(zip(images, gt_labels)):
+                labels, centroids = multi_scale_clustering(image, **kwargs)
+                segmented_image = centroids[labels].astype(
+                    np.uint8)  # Replace each label in the labels array with the corresponding centroid's RGB values
+                gt_label_name = label_map[gt_label]  # Use the ground truth label for naming the image
+                image_path = os.path.join(output_folder, f"seg_{idx}_{gt_label_name}.png")
+                cv2.imwrite(image_path, cv2.cvtColor(segmented_image, cv2.COLOR_BGR2RGB))
+                pbar.update(1)
+
     else:
         raise ValueError("Unsupported method")
 

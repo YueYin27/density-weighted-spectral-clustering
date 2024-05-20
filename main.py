@@ -41,8 +41,8 @@ def main():
     # segment_images("kmeans", test_images, test_labels, os.path.join(output_path, "kmeans"), k=4, max_iters=100)
 
     # Process and segment images using Spectral clustering
-    # segment_images("spectral_with_morphological_operations", test_images, test_labels,
-    #                os.path.join(output_path, "spectral_knn_20_sigma_13_enhanced"),
+    # segment_images("spectral", test_images, test_labels,
+    #                os.path.join(output_path, ""),
     #                graph_method="knn", k=4, max_iters=200, sigma=13.0, n_neighbors=20)
 
     # segment_images("spectral_with_autoencoder", test_images, test_labels,
@@ -52,6 +52,10 @@ def main():
     # segment_images("spectral_with_other_color_space", test_images, test_labels,
     #                os.path.join(output_path, "spectral_knn_25_sigma_13_multi_color_space_enhanced"),
     #                graph_method="knn", k=4, max_iters=200, sigma=13.0, n_neighbors=25)
+
+    segment_images("spectral_with_multi_resolution", test_images, test_labels,
+                   os.path.join(output_path, "spectral_with_multi_resolution"),
+                   graph_method="knn", k=4, max_iters=200, sigma=13.0, n_neighbors=20)
 
 
 if __name__ == "__main__":
