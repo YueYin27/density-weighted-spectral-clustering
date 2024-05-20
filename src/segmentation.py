@@ -1,8 +1,10 @@
 import os
+
 import cv2
+from tqdm import tqdm
+
 from src.clustering import *
 from src.dataloader import label_map
-from tqdm import tqdm
 
 
 def segment_images(method, images, gt_labels, output_folder, **kwargs):
@@ -12,6 +14,7 @@ def segment_images(method, images, gt_labels, output_folder, **kwargs):
     :param images: List of input images as 3D NumPy arrays (height, width, 3).
     :param gt_labels: List of ground truth labels for each image.
     :param output_folder: Folder to save segmented images.
+    :param autoencoder: Autoencoder model for spectral clustering with autoencoder.
     :param kwargs: Additional keyword arguments for the segmentation method.
     """
     os.makedirs(output_folder, exist_ok=True)
@@ -25,7 +28,7 @@ def segment_images(method, images, gt_labels, output_folder, **kwargs):
                     np.uint8)  # Replace each label in the labels array with the corresponding centroid's RGB values
                 gt_label_name = label_map[gt_label]  # Use the ground truth label for naming the image
                 image_path = os.path.join(output_folder, f"seg_{idx}_{gt_label_name}.png")
-                cv2.imwrite(image_path, segmented_image)
+                cv2.imwrite(image_path, cv2.cvtColor(segmented_image, cv2.COLOR_RGB2BGR))
                 pbar.update(1)
 
     elif method == 'spectral':
@@ -37,19 +40,19 @@ def segment_images(method, images, gt_labels, output_folder, **kwargs):
                     np.uint8)  # Replace each label in the labels array with the corresponding centroid's RGB values
                 gt_label_name = label_map[gt_label]  # Use the ground truth label for naming the image
                 image_path = os.path.join(output_folder, f"seg_{idx}_{gt_label_name}.png")
-                cv2.imwrite(image_path, segmented_image)
+                cv2.imwrite(image_path, cv2.cvtColor(segmented_image, cv2.COLOR_RGB2BGR))
                 pbar.update(1)
 
-    elif method == 'spectral_enhanced':
+    elif method == 'spectral_with_autoencoder':
         with tqdm(total=len(images)) as pbar:
-            pbar.set_description('Processing Improved Spectral:')
+            pbar.set_description('Processing Spectral:')
             for idx, (image, gt_label) in enumerate(zip(images, gt_labels)):
-                labels, centroids = spectral_clustering(image, **kwargs)
+                labels, centroids = spectral_clustering_with_autoencoder(image, **kwargs)
                 segmented_image = centroids[labels].astype(
-                    np.uint8)
-                gt_label_name = label_map[gt_label]
+                    np.uint8)  # Replace each label in the labels array with the corresponding centroid's RGB values
+                gt_label_name = label_map[gt_label]  # Use the ground truth label for naming the image
                 image_path = os.path.join(output_folder, f"seg_{idx}_{gt_label_name}.png")
-                cv2.imwrite(image_path, segmented_image)
+                cv2.imwrite(image_path, cv2.cvtColor(segmented_image, cv2.COLOR_RGB2BGR))
                 pbar.update(1)
 
     else:

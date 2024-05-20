@@ -1,10 +1,13 @@
 import numpy as np
-from sklearn.utils import shuffle
-from scipy.spatial.distance import pdist, squareform
 from scipy.linalg import eigh
+from scipy.spatial.distance import pdist, squareform
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import normalize
+from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import NearestNeighbors
+from sklearn.preprocessing import normalize
+from sklearn.utils import shuffle
+
+from src.autoencoder import *
 
 
 def kmeans(image, k=4, max_iters=100):
@@ -93,6 +96,51 @@ def spectral_clustering(image, graph_method, k=4, sigma=30.0, n_neighbors=10, ma
     labels = kmeans.fit_predict(eigenvectors)
 
     # Convert centroids to original pixel space colors
+    labels = labels.reshape(image.shape[:2])
+    centroids = np.zeros((n_clusters, 3))
+    for i in range(n_clusters):
+        cluster_pixels = image[labels == i]
+        if len(cluster_pixels) > 0:
+            centroids[i] = np.mean(cluster_pixels, axis=0)
+
+    return labels, centroids
+
+
+def spectral_clustering_with_autoencoder(image, graph_method, k=4, sigma=30.0, n_neighbors=10, max_iters=100,
+                                         epsilon=1e-10, hidden_dim=128, epochs=50):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    n_clusters = k
+    pixels = image.reshape(-1, 3) / 255.0  # Normalize pixel values to [0, 1]
+
+    # Train autoencoder
+    autoencoder = train_autoencoder(pixels, input_dim=3, hidden_dim=hidden_dim, epochs=epochs)
+    autoencoder.eval()
+    with torch.no_grad():
+        encoded_pixels, _ = autoencoder(torch.tensor(pixels, dtype=torch.float32).to(device))
+    encoded_pixels = encoded_pixels.cpu().numpy()
+
+    if graph_method == 'knn':
+        nbrs = NearestNeighbors(n_neighbors=n_neighbors).fit(encoded_pixels)
+        distances, indices = nbrs.kneighbors(encoded_pixels)
+        similarity_matrix = np.zeros((encoded_pixels.shape[0], encoded_pixels.shape[0]))
+        for i in range(encoded_pixels.shape[0]):
+            for j in range(1, n_neighbors):
+                similarity_matrix[i, indices[i, j]] = np.exp(-distances[i, j] ** 2 / (2.0 * sigma ** 2))
+                similarity_matrix[indices[i, j], i] = similarity_matrix[i, indices[i, j]]
+
+    elif graph_method == 'fully_connected':
+        pairwise_dists = squareform(pdist(encoded_pixels, 'sqeuclidean'))
+        similarity_matrix = np.exp(-pairwise_dists / (2.0 * sigma ** 2))
+
+    degree_matrix = np.diag(similarity_matrix.sum(axis=1))
+    degree_matrix[degree_matrix == 0] = epsilon
+    d_inv_sqrt = np.diag(1.0 / np.sqrt(degree_matrix.diagonal()))
+    normalized_laplacian = np.dot(d_inv_sqrt, np.dot(degree_matrix - similarity_matrix, d_inv_sqrt))
+    _, eigenvectors = eigh(normalized_laplacian, subset_by_index=[0, n_clusters - 1])
+    eigenvectors = normalize(eigenvectors, axis=1)
+
+    kmeans = KMeans(n_clusters=n_clusters, init='k-means++', max_iter=max_iters, random_state=42)
+    labels = kmeans.fit_predict(eigenvectors)
     labels = labels.reshape(image.shape[:2])
     centroids = np.zeros((n_clusters, 3))
     for i in range(n_clusters):
