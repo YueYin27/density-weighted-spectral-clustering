@@ -41,7 +41,7 @@ def kmeans(image, k=4, max_iters=100):
     return labels, centroids
 
 
-def spectral_clustering(image, graph_method, k=4, sigma=30.0, n_neighbors=10, max_iters=100, epsilon=1e-10):
+def spectral_clustering(image, graph_method, k=4, sigma=30.0, n_neighbors=10, max_iters=100, epsilon=1e-10, image_channel=3):
     """
     Perform Spectral Clustering on an image.
 
@@ -52,11 +52,12 @@ def spectral_clustering(image, graph_method, k=4, sigma=30.0, n_neighbors=10, ma
     :param max_iters: Maximum number of iterations to run K-means.
     :param epsilon: Small positive value to avoid division by zero.
     :param graph_method: Method to construct the graph ('knn' or 'fully_connected').
+    :param image_channel: Number of channels in the image.
     :return: labels: Cluster labels for each pixel reshaped to the original image shape.
     :return: centroids: RGB values of the cluster centroids.
     """
     n_clusters = k
-    pixels = image.reshape(-1, 3)
+    pixels = image.reshape(-1, image_channel)
 
     if graph_method == 'knn':
         # Compute k-nearest neighbors graph
@@ -97,7 +98,7 @@ def spectral_clustering(image, graph_method, k=4, sigma=30.0, n_neighbors=10, ma
 
     # Convert centroids to original pixel space colors
     labels = labels.reshape(image.shape[:2])
-    centroids = np.zeros((n_clusters, 3))
+    centroids = np.zeros((n_clusters, image_channel))
     for i in range(n_clusters):
         cluster_pixels = image[labels == i]
         if len(cluster_pixels) > 0:
@@ -107,13 +108,13 @@ def spectral_clustering(image, graph_method, k=4, sigma=30.0, n_neighbors=10, ma
 
 
 def spectral_clustering_with_autoencoder(image, graph_method, k=4, sigma=30.0, n_neighbors=10, max_iters=100,
-                                         epsilon=1e-10, hidden_dim=128, epochs=50):
+                                         epsilon=1e-10, hidden_dim=128, epochs=50, image_channel=3):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     n_clusters = k
-    pixels = image.reshape(-1, 3) / 255.0  # Normalize pixel values to [0, 1]
+    pixels = image.reshape(-1, image_channel) / 255.0  # Normalize pixel values to [0, 1]
 
     # Train autoencoder
-    autoencoder = train_autoencoder(pixels, input_dim=3, hidden_dim=hidden_dim, epochs=epochs)
+    autoencoder = train_autoencoder(pixels, input_dim=image_channel, hidden_dim=hidden_dim, epochs=epochs)
     autoencoder.eval()
     with torch.no_grad():
         encoded_pixels, _ = autoencoder(torch.tensor(pixels, dtype=torch.float32).to(device))
@@ -142,7 +143,7 @@ def spectral_clustering_with_autoencoder(image, graph_method, k=4, sigma=30.0, n
     kmeans = KMeans(n_clusters=n_clusters, init='k-means++', max_iter=max_iters, random_state=42)
     labels = kmeans.fit_predict(eigenvectors)
     labels = labels.reshape(image.shape[:2])
-    centroids = np.zeros((n_clusters, 3))
+    centroids = np.zeros((n_clusters, image_channel))
     for i in range(n_clusters):
         cluster_pixels = image[labels == i]
         if len(cluster_pixels) > 0:
