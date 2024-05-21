@@ -1,8 +1,5 @@
 # Density-Weighted Spectral Clustering for Image Segmentation
 
-## Overview
-This project implements and compares three image segmentation algorithms: K-means Clustering, Spectral Clustering, and a novel Density-Weighted Spectral Clustering method that integrates multiple color spaces. The segmentation is performed on the CIFAR-10 dataset, specifically focusing on images of horses, deer, and airplanes.
-
 ## Table of Contents
 - [Overview](#overview)
 - [Dataset](#dataset)
@@ -11,6 +8,11 @@ This project implements and compares three image segmentation algorithms: K-mean
 - [Results](#results)
 - [Ablation Study](#ablation-study)
 - [Contributors](#contributors)
+
+## Overview
+This project implements and compares three image segmentation algorithms: K-means Clustering, Spectral Clustering, and a novel Density-Weighted Spectral Clustering method that integrates multiple color spaces. The segmentation is performed on the CIFAR-10 dataset, specifically focusing on images of horses, deer, and airplanes. The overview of our method is shown as below:
+![Overview of Density Weighted Spectral Clustering with Multi-Colour Space![image](https://github.com/YueYin27/density-weighted-spectral-clustering/assets/75305926/585eba7b-c84e-4bbe-b0a5-3459413f5220)
+.](readme_figures/method.png)
 
 ## Dataset
 The CIFAR-10 dataset consists of 60,000 32x32 color images in 10 different classes. For this project, we focus on three classes: horse, deer, and airplane. Each class contains 6,000 images, divided into 5,000 training images and 1,000 test images.
