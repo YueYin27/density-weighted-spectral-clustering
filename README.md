@@ -7,7 +7,6 @@
 - [How to Run](#how-to-run)
 - [Results](#results)
 - [Ablation Study](#ablation-study)
-- [Contributors](#contributors)
 
 ## Overview
 This project implements and compares three image segmentation algorithms: K-means Clustering, Spectral Clustering, and a novel Density-Weighted Spectral Clustering method that integrates multiple color spaces. The segmentation is performed on the CIFAR-10 dataset, specifically focusing on images of horses, deer, and airplanes. The overview of our method is shown as below:
@@ -62,6 +61,3 @@ The comparative results of the three methods documented in the paper. Below are 
 ### Ablation Study
 ![Segmentation results with and without density estimation in Density Weighted Spectral Clustering.](readme_figures/ablation.png)
 
-## Contributors
-- [@Yue Yin](https://github.com/YueYin27)
-- [@Yuxuan Zhong](https://github.com/qq1026917124)
