@@ -1,4 +1,4 @@
-# Density-Weighted Spectral Clustering for Image Segmentation
+# Image Segmentation via Density-Weighted Spectral Clustering with Multi-Colour Space
 
 ## Table of Contents
 - [Overview](#overview)
