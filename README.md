@@ -55,10 +55,10 @@ The dataset can be downloaded from [here](https://www.cs.toronto.edu/~kriz/cifar
 The comparative results of the three methods documented in the paper. Below are some sample segmentation results:
 
 ### Comparative Results
-![Segmentation results using K-means clustering, Spectral Clustering, and Density Weighted Spectral Clustering.](readme_files/method_comparison.png)
+![Segmentation results using K-means clustering, Spectral Clustering, and Density Weighted Spectral Clustering.](readme_figures/method_comparison.png)
 
 ### Ablation Study
-![Segmentation results with and without density estimation in Density Weighted Spectral Clustering.](readme_files/ablation.png)
+![Segmentation results with and without density estimation in Density Weighted Spectral Clustering.](readme_figures/ablation.png)
 
 ## Contributors
 - [@Yue Yin](https://github.com/YueYin27)
